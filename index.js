@@ -8,7 +8,7 @@ app.use(cors())
 app.use(express.json())
 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.i8hseoh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -37,6 +37,27 @@ async function run() {
         const result = await lessonsCollections.insertOne(data)
         res.send(result)
     })
+
+    app.delete("/lesson-del/:id", async(req,res)=>{
+        const id = req.params
+        const query = {_id: new ObjectId(id?.id)}
+        const result = await lessonsCollections.deleteOne(query)
+        res.send(result)
+    })
+
+    
+    app.patch('/lesson-update/:id', async (req, res) => {
+            try {
+                const id = req.params.id;
+                const updatedData = req.body;
+                const query = { _id: new ObjectId(id) };
+                const update = { $set: updatedData };
+                const result = await lessonsCollections.updateOne(query, update, { upsert: true });
+                res.status(200).send(result);
+            } catch (error) {
+                res.status(500).json({ message: 'Failed to update lesson', error: error.message });
+            }
+        });
 
 
     // Send a ping to confirm a successful connection
