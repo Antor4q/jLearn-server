@@ -26,6 +26,7 @@ async function run() {
     await client.connect();
 
     const lessonsCollections = client.db("jLearnDB").collection("lessons")
+    const usersCollections = client.db("jLearnDB").collection("users")
 
     app.get("/lessons", async(req,res)=>{
         const result =  await lessonsCollections.find().toArray()
@@ -58,6 +59,20 @@ async function run() {
                 res.status(500).json({ message: 'Failed to update lesson', error: error.message });
             }
         });
+
+    // users all api
+
+    app.get("/users", async(req,res) =>{
+        const result = await usersCollections.find().toArray()
+        res.send(result)
+    })
+
+    app.delete("/user-del/:id", async(req,res)=>{
+        const id = req.params
+        const query = {_id: new ObjectId(id?.id)}
+        const result = await usersCollections.deleteOne(query)
+        res.send(result)
+    })
 
 
     // Send a ping to confirm a successful connection
