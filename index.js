@@ -74,6 +74,15 @@ async function run() {
         res.send(result)
     })
 
+    app.patch("/user-role/:id", async (req, res) => {
+        const id = req.params.id;
+        const { role } = req.body;
+        const filter = { _id: new ObjectId(id) };
+        const update = { $set: { role } };
+        const result = await usersCollections.updateOne(filter, update);
+        res.send(result);
+      });
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
