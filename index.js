@@ -27,6 +27,7 @@ async function run() {
 
     const lessonsCollections = client.db("jLearnDB").collection("lessons")
     const usersCollections = client.db("jLearnDB").collection("users")
+    const vocabulariesCollections = client.db("jLearnDB").collection("vocabularies")
 
     app.get("/lessons", async(req,res)=>{
         const result =  await lessonsCollections.find().toArray()
@@ -82,6 +83,18 @@ async function run() {
         const result = await usersCollections.updateOne(filter, update);
         res.send(result);
       });
+
+    //  vocabularies api
+    app.get("/vocabularies", async(req,res) =>{
+        const result = await vocabulariesCollections.find().toArray()
+        res.send(result)
+    })
+
+    app.post("/vocabulary", async(req,res)=>{
+        const data = req.body
+        const result = await vocabulariesCollections.insertOne(data)
+        res.send(result)
+    })
 
 
     // Send a ping to confirm a successful connection
