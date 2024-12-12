@@ -96,6 +96,24 @@ async function run() {
         res.send(result)
     })
 
+    app.delete("/vocabulary-del/:id", async(req,res)=>{
+        const id = req.params
+        const query = {_id: new ObjectId(id?.id)}
+        const result = await vocabulariesCollections.deleteOne(query)
+        res.send(result)
+    })
+
+    app.patch("/vocabulary-update/:id", async (req, res) => {
+        const id = req.params.id;
+        const updatedVocabulary = req.body;
+        const query = { _id: new ObjectId(id) };
+        const updateDoc = {
+          $set: updatedVocabulary,
+        };
+        const result = await vocabulariesCollections.updateOne(query, updateDoc);
+        res.send(result);
+      });
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
