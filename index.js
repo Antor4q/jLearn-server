@@ -2,6 +2,8 @@ const express = require("express")
 const app = express()
 const cors = require("cors")
 require("dotenv").config()
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 5000
 
 app.use(cors())
@@ -26,8 +28,81 @@ async function run() {
     await client.connect();
 
     const lessonsCollections = client.db("jLearnDB").collection("lessons")
-    const usersCollections = client.db("jLearnDB").collection("users")
+    const usersCollection = client.db("jLearnDB").collection("users")
     const vocabulariesCollections = client.db("jLearnDB").collection("vocabularies")
+    
+
+
+     // Middleware for JWT Verification
+const verifyToken = (req, res, next) => {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+  
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+      if (err) {
+        return res.status(401).json({ message: "Invalid token" });
+      }
+      req.user = user;
+      next();
+    });
+  };
+  
+  // User Registration
+  app.post("/register", async (req, res) => {
+  
+    const { name, email, password, photo } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+  
+    const existingUser = await usersCollection.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email already exists" });
+    }
+  
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = {
+      name,
+      email,
+      password: hashedPassword,
+      photo,
+      role: "user", // Default role is 'user'
+    };
+  
+    const result = await usersCollection.insertOne(newUser);
+    res.status(201).json({ message: "User registered successfully", result });
+  });
+  
+  // User Login
+  app.post("/singIn", async (req, res) => {
+    const { email, password } = req.body;
+  
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password required" });
+    }
+  
+    const user = await usersCollection.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+  
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+  
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+  
+    res.json({ message: "Login successful", token });
+  });
+  
+    // lessons all api
 
     app.get("/lessons", async(req,res)=>{
         const result =  await lessonsCollections.find().toArray()
@@ -64,14 +139,14 @@ async function run() {
     // users all api
 
     app.get("/users", async(req,res) =>{
-        const result = await usersCollections.find().toArray()
+        const result = await usersCollection.find().toArray()
         res.send(result)
     })
 
     app.delete("/user-del/:id", async(req,res)=>{
         const id = req.params
         const query = {_id: new ObjectId(id?.id)}
-        const result = await usersCollections.deleteOne(query)
+        const result = await usersCollection.deleteOne(query)
         res.send(result)
     })
 
@@ -80,7 +155,7 @@ async function run() {
         const { role } = req.body;
         const filter = { _id: new ObjectId(id) };
         const update = { $set: { role } };
-        const result = await usersCollections.updateOne(filter, update);
+        const result = await usersCollection.updateOne(filter, update);
         res.send(result);
       });
 
@@ -131,5 +206,5 @@ app.get("/", (req,res)=>{
 })
 
 app.listen(port, ()=> {
-    console.log(`Snap Net is running on post ${port}`)
+    console.log(`jLearn is running on post ${port}`)
 })
