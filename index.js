@@ -6,7 +6,24 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 5000
 
-app.use(cors())
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://jocular-sundae-bad6f3.netlify.app",
+  "http://localhost:5000",
+  "https://j-learn-server.vercel.app",
+];
+
+app.use(cors({
+  origin: function (origin,callback){
+    if(!origin) return callback(null,true)
+     if( allowedOrigins.indexOf(origin) !== -1){
+      return callback(null,true)
+     }else{
+       callback(new Error('Not allowed by cors'))
+     }
+  },
+  credentials : true
+}))
 app.use(express.json())
 
 
