@@ -68,7 +68,7 @@ const verifyToken = (req, res, next) => {
       email,
       password: hashedPassword,
       photo,
-      role: "user", // Default role is 'user'
+      role: "user", 
     };
   
     const result = await usersCollection.insertOne(newUser);
